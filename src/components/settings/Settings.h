@@ -6,7 +6,6 @@
 #include "components/brightness/BrightnessController.h"
 #include "components/fs/FS.h"
 #include "displayapp/apps/Apps.h"
-#include <nrf_log.h>
 
 namespace Pinetime {
   namespace Controllers {
@@ -329,7 +328,7 @@ namespace Pinetime {
           if (settings.dfuAndFsEnabledOnBoot) { // ensure both variables are in consistent state
             settingsChanged = true;
             settings.dfuAndFsEnabledOnBoot = false;
-            NRF_LOG_ERROR("Settings: DfuAndFsMode data corrupted");
+            ;
           }
           return DfuAndFsMode::EnabledTillReboot;
         }

@@ -1,5 +1,4 @@
 #include "components/ble/CurrentTimeService.h"
-#include <nrf_log.h>
 
 using namespace Pinetime::Controllers;
 
@@ -35,19 +34,18 @@ void CurrentTimeService::Init() {
 
 int CurrentTimeService::OnCurrentTimeAccessed(struct ble_gatt_access_ctxt* ctxt) {
 
-  NRF_LOG_INFO("Setting time...");
+  ;
 
   if (ctxt->op == BLE_GATT_ACCESS_OP_WRITE_CHR) {
     CtsCurrentTimeData result;
     int res = os_mbuf_copydata(ctxt->om, 0, sizeof(CtsCurrentTimeData), &result);
     if (res < 0) {
-      NRF_LOG_ERROR("Error reading BLE Data writing to CTS Current Time (too little data)")
-      return BLE_ATT_ERR_INVALID_ATTR_VALUE_LEN;
+      ;
     }
 
     uint16_t year = ((uint16_t) result.year_MSO << 8) + result.year_LSO;
 
-    NRF_LOG_INFO("Received data: %d-%d-%d %d:%d:%d", year, result.month, result.dayofmonth, result.hour, result.minute, result.second);
+    ;
 
     m_dateTimeController.SetTime(year, result.month, result.dayofmonth, result.hour, result.minute, result.second);
 
@@ -70,18 +68,17 @@ int CurrentTimeService::OnCurrentTimeAccessed(struct ble_gatt_access_ctxt* ctxt)
 }
 
 int CurrentTimeService::OnLocalTimeAccessed(struct ble_gatt_access_ctxt* ctxt) {
-  NRF_LOG_INFO("Setting timezone...");
+  ;
 
   if (ctxt->op == BLE_GATT_ACCESS_OP_WRITE_CHR) {
     CtsLocalTimeData result;
     int res = os_mbuf_copydata(ctxt->om, 0, sizeof(CtsLocalTimeData), &result);
 
     if (res < 0) {
-      NRF_LOG_ERROR("Error reading BLE Data writing to CTS Local Time (too little data)")
-      return BLE_ATT_ERR_INVALID_ATTR_VALUE_LEN;
+      ;
     }
 
-    NRF_LOG_INFO("Received data: %d %d", result.timezone, result.dst);
+    ;
 
     m_dateTimeController.SetTimeZone(result.timezone, result.dst);
 

@@ -28,7 +28,7 @@
 
 #ifndef PORTMACRO_CMSIS_H
 #define PORTMACRO_CMSIS_H
-#include "app_util.h"
+
 
 #ifdef __cplusplus
 extern "C" {
@@ -75,14 +75,7 @@ typedef unsigned long UBaseType_t;
 #define portTICK_PERIOD_MS          ( ( TickType_t ) 1000 / configTICK_RATE_HZ )
 #define portBYTE_ALIGNMENT          8
 
-/* RTC register */
-#define portNRF_RTC_REG        NRF_RTC1
-/* IRQn used by the selected RTC */
-#define portNRF_RTC_IRQn       RTC1_IRQn
-/* Constants required to manipulate the NVIC. */
-#define portNRF_RTC_PRESCALER  ( (uint32_t) (ROUNDED_DIV(configSYSTICK_CLOCK_HZ, configTICK_RATE_HZ) - 1) )
-/* Maximum RTC ticks */
-#define portNRF_RTC_MAXTICKS   ((1U<<24)-1U)
+#define portNRF_RTC_MAXTICKS   (0xFFFFFFFFU)
 /*-----------------------------------------------------------*/
 
 /* Scheduler utilities. */
@@ -187,4 +180,3 @@ size_t xPortGetHeapSize(void);
 #endif
 
 #endif /* PORTMACRO_CMSIS_H */
-

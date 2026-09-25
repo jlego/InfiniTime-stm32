@@ -1,12 +1,8 @@
 #pragma once
 
-#include <libraries/log/nrf_log.h>
-
 #ifndef LFS_TRACE
 #ifdef LFS_YES_TRACE
-#define LFS_TRACE_(fmt, ...) \
-    NRF_LOG_DEBUG("[LFS] trace: " fmt "%s\n", __VA_ARGS__)
-#define LFS_TRACE(...) LFS_TRACE_(__VA_ARGS__, "")
+#define LFS_TRACE(fmt, ...)
 #else
 #define LFS_TRACE(...)
 #endif
@@ -14,9 +10,7 @@
 
 #ifndef LFS_DEBUG
 #ifndef LFS_NO_DEBUG
-#define LFS_DEBUG_(fmt, ...) \
-    NRF_LOG_DEBUG("[LFS] debug: " fmt "%s\n", __VA_ARGS__)
-#define LFS_DEBUG(...) LFS_DEBUG_(__VA_ARGS__, "")
+#define LFS_DEBUG(fmt, ...)
 #else
 #define LFS_DEBUG(...)
 #endif
@@ -24,9 +18,7 @@
 
 #ifndef LFS_WARN
 #ifndef LFS_NO_WARN
-#define LFS_WARN_(fmt, ...) \
-    NRF_LOG_WARNING("[LFS] warn: " fmt "%s\n", __VA_ARGS__)
-#define LFS_WARN(...) LFS_WARN_(__VA_ARGS__, "")
+#define LFS_WARN(fmt, ...)
 #else
 #define LFS_WARN(...)
 #endif
@@ -34,15 +26,12 @@
 
 #ifndef LFS_ERROR
 #ifndef LFS_NO_ERROR
-#define LFS_ERROR_(fmt, ...) \
-    NRF_LOG_ERROR("[LFS] error: " fmt "%s\n", __VA_ARGS__)
-#define LFS_ERROR(...) LFS_ERROR_(__VA_ARGS__, "")
+#define LFS_ERROR(fmt, ...)
 #else
 #define LFS_ERROR(...)
 #endif
 #endif
 
-// This is required in order for the CRC implementation in littlefs/lfs_util.c to be compiled
 #undef LFS_CONFIG
 
 #undef LFS_UTIL_H

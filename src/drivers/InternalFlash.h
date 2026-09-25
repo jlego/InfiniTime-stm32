@@ -1,6 +1,6 @@
 #pragma once
-
 #include <cstdint>
+#include "stm32wbxx_hal.h"
 
 namespace Pinetime {
   namespace Drivers {

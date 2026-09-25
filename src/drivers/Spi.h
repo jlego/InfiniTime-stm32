@@ -3,12 +3,13 @@
 #include <cstddef>
 #include <functional>
 #include "drivers/SpiMaster.h"
+#include "drivers/PinMap.h"
 
 namespace Pinetime {
   namespace Drivers {
     class Spi {
     public:
-      Spi(SpiMaster& spiMaster, uint8_t pinCsn);
+      Spi(SpiMaster& spiMaster, PinMap::GpioPin pinCsn);
       Spi(const Spi&) = delete;
       Spi& operator=(const Spi&) = delete;
       Spi(Spi&&) = delete;
@@ -23,7 +24,8 @@ namespace Pinetime {
 
     private:
       SpiMaster& spiMaster;
-      uint8_t pinCsn;
+      PinMap::GpioPin pinCsn;
+      bool initialized = false;
     };
   }
 }

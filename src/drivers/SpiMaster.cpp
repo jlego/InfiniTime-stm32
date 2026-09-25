@@ -1,301 +1,104 @@
 #include "drivers/SpiMaster.h"
-#include <hal/nrf_gpio.h>
-#include <hal/nrf_spim.h>
-#include <nrfx_log.h>
+#include "drivers/PinMap.h"
 #include <algorithm>
 
 using namespace Pinetime::Drivers;
 
-SpiMaster::SpiMaster(const SpiMaster::SpiModule spi, const SpiMaster::Parameters& params) : spi {spi}, params {params} {
+SpiMaster::SpiMaster(SPI_HandleTypeDef* hspi) : hspi {hspi} {
+}
+
+void SpiMaster::ConfigureSpi() {
+  hspi->Instance = SPI1;
+  hspi->Init.Mode = SPI_MODE_MASTER;
+  hspi->Init.Direction = SPI_DIRECTION_2LINES;
+  hspi->Init.DataSize = SPI_DATASIZE_8BIT;
+  hspi->Init.CLKPolarity = SPI_POLARITY_HIGH;
+  hspi->Init.CLKPhase = SPI_PHASE_2EDGE;
+  hspi->Init.NSS = SPI_NSS_SOFT;
+  hspi->Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_2;
+  hspi->Init.FirstBit = SPI_FIRSTBIT_MSB;
+  hspi->Init.TIMode = SPI_TIMODE_DISABLE;
+  hspi->Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
+  hspi->Init.CRCPolynomial = 7;
+  hspi->Init.CRCLength = SPI_CRC_LENGTH_DATASIZE;
+  hspi->Init.NSSPMode = SPI_NSS_PULSE_DISABLE;
 }
 
 bool SpiMaster::Init() {
   if (mutex == nullptr) {
     mutex = xSemaphoreCreateBinary();
-    ASSERT(mutex != nullptr);
-  }
-
-  /* Configure GPIO pins used for pselsck, pselmosi, pselmiso and pselss for SPI0 */
-  nrf_gpio_pin_set(params.pinSCK);
-  nrf_gpio_cfg_output(params.pinSCK);
-  nrf_gpio_pin_clear(params.pinMOSI);
-  nrf_gpio_cfg_output(params.pinMOSI);
-  nrf_gpio_cfg_input(params.pinMISO, NRF_GPIO_PIN_NOPULL);
-  //  nrf_gpio_cfg_output(params.pinCSN);
-  //  pinCsn = params.pinCSN;
-
-  switch (spi) {
-    case SpiModule::SPI0:
-      spiBaseAddress = NRF_SPIM0;
-      break;
-    case SpiModule::SPI1:
-      spiBaseAddress = NRF_SPIM1;
-      break;
-    default:
+    if (mutex == nullptr)
       return false;
   }
 
-  /* Configure pins, frequency and mode */
-  spiBaseAddress->PSELSCK = params.pinSCK;
-  spiBaseAddress->PSELMOSI = params.pinMOSI;
-  spiBaseAddress->PSELMISO = params.pinMISO;
+  ConfigureSpi();
 
-  uint32_t frequency;
-  switch (params.Frequency) {
-    case Frequencies::Freq8Mhz:
-      frequency = 0x80000000;
-      break;
-    default:
-      return false;
-  }
-  spiBaseAddress->FREQUENCY = frequency;
-
-  uint32_t regConfig = 0;
-  switch (params.bitOrder) {
-    case BitOrder::Msb_Lsb:
-      break;
-    case BitOrder::Lsb_Msb:
-      regConfig = 1;
-      break;
-    default:
-      return false;
-  }
-  switch (params.mode) {
-    case Modes::Mode0:
-      break;
-    case Modes::Mode1:
-      regConfig |= (0x01 << 1);
-      break;
-    case Modes::Mode2:
-      regConfig |= (0x02 << 1);
-      break;
-    case Modes::Mode3:
-      regConfig |= (0x03 << 1);
-      break;
-    default:
-      return false;
+  if (HAL_SPI_Init(hspi) != HAL_OK) {
+    return false;
   }
 
-  spiBaseAddress->CONFIG = regConfig;
-  spiBaseAddress->EVENTS_ENDRX = 0;
-  spiBaseAddress->EVENTS_ENDTX = 0;
-  spiBaseAddress->EVENTS_END = 0;
+  __HAL_SPI_ENABLE(hspi);
 
-  spiBaseAddress->INTENSET = ((unsigned) 1 << (unsigned) 6);
-  spiBaseAddress->INTENSET = ((unsigned) 1 << (unsigned) 1);
-  spiBaseAddress->INTENSET = ((unsigned) 1 << (unsigned) 19);
-
-  spiBaseAddress->ENABLE = (SPIM_ENABLE_ENABLE_Enabled << SPIM_ENABLE_ENABLE_Pos);
-
-  NRFX_IRQ_PRIORITY_SET(SPIM0_SPIS0_TWIM0_TWIS0_SPI0_TWI0_IRQn, 2);
-  NRFX_IRQ_ENABLE(SPIM0_SPIS0_TWIM0_TWIS0_SPI0_TWI0_IRQn);
-
+  initialized = true;
   xSemaphoreGive(mutex);
   return true;
 }
 
-void SpiMaster::SetupWorkaroundForErratum58() {
-  nrfx_gpiote_pin_t pin = spiBaseAddress->PSEL.SCK;
-  nrfx_gpiote_in_config_t gpioteCfg = {.sense = NRF_GPIOTE_POLARITY_TOGGLE,
-                                       .pull = NRF_GPIO_PIN_NOPULL,
-                                       .is_watcher = false,
-                                       .hi_accuracy = true,
-                                       .skip_gpio_setup = true};
-  if (!workaroundActive) {
-    // Create an event when SCK toggles.
-    APP_ERROR_CHECK(nrfx_gpiote_in_init(pin, &gpioteCfg, NULL));
-    nrfx_gpiote_in_event_enable(pin, false);
-
-    // Stop the spim instance when SCK toggles.
-    nrf_ppi_channel_endpoint_setup(workaroundPpi, nrfx_gpiote_in_event_addr_get(pin), spiBaseAddress->TASKS_STOP);
-    nrf_ppi_channel_enable(workaroundPpi);
-  }
-
-  spiBaseAddress->EVENTS_END = 0;
-
-  // Disable IRQ
-  spiBaseAddress->INTENCLR = (1 << 6);
-  spiBaseAddress->INTENCLR = (1 << 1);
-  spiBaseAddress->INTENCLR = (1 << 19);
-  workaroundActive = true;
-}
-
-void SpiMaster::DisableWorkaroundForErratum58() {
-  nrfx_gpiote_pin_t pin = spiBaseAddress->PSEL.SCK;
-  if (workaroundActive) {
-    nrfx_gpiote_in_uninit(pin);
-    nrf_ppi_channel_disable(workaroundPpi);
-  }
-  spiBaseAddress->EVENTS_END = 0;
-
-  // Enable IRQ
-  spiBaseAddress->INTENSET = (1 << 6);
-  spiBaseAddress->INTENSET = (1 << 1);
-  spiBaseAddress->INTENSET = (1 << 19);
-  workaroundActive = false;
-}
-
-void SpiMaster::OnEndEvent() {
-  if (currentBufferAddr == 0) {
-    return;
-  }
-
-  auto s = currentBufferSize;
-  if (s > 0) {
-    auto currentSize = std::min((size_t) 255, s);
-    PrepareTx(currentBufferAddr, currentSize);
-    currentBufferAddr = currentBufferAddr + currentSize;
-    currentBufferSize = currentBufferSize - currentSize;
-
-    spiBaseAddress->TASKS_START = 1;
-  } else {
-    nrf_gpio_pin_set(this->pinCsn);
-    currentBufferAddr = 0;
-    BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-    xSemaphoreGiveFromISR(mutex, &xHigherPriorityTaskWoken);
-    portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
-  }
-}
-
-void SpiMaster::OnStartedEvent() {
-}
-
-void SpiMaster::PrepareTx(const uint32_t bufferAddress, const size_t size) {
-  spiBaseAddress->TXD.PTR = bufferAddress;
-  spiBaseAddress->TXD.MAXCNT = size;
-  spiBaseAddress->TXD.LIST = 0;
-  spiBaseAddress->RXD.PTR = 0;
-  spiBaseAddress->RXD.MAXCNT = 0;
-  spiBaseAddress->RXD.LIST = 0;
-  spiBaseAddress->EVENTS_END = 0;
-}
-
-void SpiMaster::PrepareRx(const uint32_t bufferAddress, const size_t size) {
-  spiBaseAddress->TXD.PTR = 0;
-  spiBaseAddress->TXD.MAXCNT = 0;
-  spiBaseAddress->TXD.LIST = 0;
-  spiBaseAddress->RXD.PTR = bufferAddress;
-  spiBaseAddress->RXD.MAXCNT = size;
-  spiBaseAddress->RXD.LIST = 0;
-  spiBaseAddress->EVENTS_END = 0;
-}
-
-bool SpiMaster::Write(uint8_t pinCsn, const uint8_t* data, size_t size, const std::function<void()>& preTransactionHook) {
+bool SpiMaster::Write(const uint8_t* data, size_t size, const std::function<void()>& preTransactionHook) {
   if (data == nullptr)
     return false;
+
   auto ok = xSemaphoreTake(mutex, portMAX_DELAY);
-  ASSERT(ok == true);
-
-  this->pinCsn = pinCsn;
-
-  if (size == 1) {
-    SetupWorkaroundForErratum58();
-  } else {
-    DisableWorkaroundForErratum58();
-  }
+  if (ok != pdTRUE)
+    return false;
 
   if (preTransactionHook != nullptr) {
     preTransactionHook();
   }
-  nrf_gpio_pin_clear(this->pinCsn);
 
-  currentBufferAddr = (uint32_t) data;
-  currentBufferSize = size;
-
-  auto currentSize = std::min((size_t) 255, (size_t) currentBufferSize);
-  PrepareTx(currentBufferAddr, currentSize);
-  currentBufferSize = currentBufferSize - currentSize;
-  currentBufferAddr = currentBufferAddr + currentSize;
-  spiBaseAddress->TASKS_START = 1;
-
-  if (size == 1) {
-    while (spiBaseAddress->EVENTS_END == 0)
-      ;
-    nrf_gpio_pin_set(this->pinCsn);
-    currentBufferAddr = 0;
-
-    DisableWorkaroundForErratum58();
-
-    xSemaphoreGive(mutex);
-  }
-
-  return true;
-}
-
-bool SpiMaster::Read(uint8_t pinCsn, uint8_t* cmd, size_t cmdSize, uint8_t* data, size_t dataSize) {
-  xSemaphoreTake(mutex, portMAX_DELAY);
-
-  this->pinCsn = pinCsn;
-  DisableWorkaroundForErratum58();
-  spiBaseAddress->INTENCLR = (1 << 6);
-  spiBaseAddress->INTENCLR = (1 << 1);
-  spiBaseAddress->INTENCLR = (1 << 19);
-
-  nrf_gpio_pin_clear(this->pinCsn);
-
-  currentBufferAddr = 0;
-  currentBufferSize = 0;
-
-  PrepareTx((uint32_t) cmd, cmdSize);
-  spiBaseAddress->TASKS_START = 1;
-  while (spiBaseAddress->EVENTS_END == 0)
-    ;
-
-  PrepareRx((uint32_t) data, dataSize);
-  spiBaseAddress->TASKS_START = 1;
-
-  while (spiBaseAddress->EVENTS_END == 0)
-    ;
-  nrf_gpio_pin_set(this->pinCsn);
+  HAL_StatusTypeDef status = HAL_SPI_Transmit(hspi, const_cast<uint8_t*>(data), size, HAL_MAX_DELAY);
 
   xSemaphoreGive(mutex);
+  return status == HAL_OK;
+}
 
+bool SpiMaster::Read(uint8_t* cmd, size_t cmdSize, uint8_t* data, size_t dataSize) {
+  auto ok = xSemaphoreTake(mutex, portMAX_DELAY);
+  if (ok != pdTRUE)
+    return false;
+
+  if (cmdSize > 0) {
+    HAL_StatusTypeDef status = HAL_SPI_Transmit(hspi, cmd, cmdSize, HAL_MAX_DELAY);
+    if (status != HAL_OK) {
+      xSemaphoreGive(mutex);
+      return false;
+    }
+  }
+
+  if (dataSize > 0) {
+    HAL_StatusTypeDef status = HAL_SPI_Receive(hspi, data, dataSize, HAL_MAX_DELAY);
+    if (status != HAL_OK) {
+      xSemaphoreGive(mutex);
+      return false;
+    }
+  }
+
+  xSemaphoreGive(mutex);
   return true;
 }
 
 void SpiMaster::Sleep() {
-  while (spiBaseAddress->ENABLE != 0) {
-    spiBaseAddress->ENABLE = (SPIM_ENABLE_ENABLE_Disabled << SPIM_ENABLE_ENABLE_Pos);
+  if (initialized) {
+    HAL_SPI_DeInit(hspi);
+    __HAL_RCC_SPI1_CLK_DISABLE();
   }
-  nrf_gpio_cfg_default(params.pinSCK);
-  nrf_gpio_cfg_default(params.pinMOSI);
-  nrf_gpio_cfg_default(params.pinMISO);
-
-  NRF_LOG_INFO("[SPIMASTER] sleep")
 }
 
 void SpiMaster::Wakeup() {
-  Init();
-  NRF_LOG_INFO("[SPIMASTER] Wakeup");
-}
-
-bool SpiMaster::WriteCmdAndBuffer(uint8_t pinCsn, const uint8_t* cmd, size_t cmdSize, const uint8_t* data, size_t dataSize) {
-  xSemaphoreTake(mutex, portMAX_DELAY);
-
-  this->pinCsn = pinCsn;
-  DisableWorkaroundForErratum58();
-  spiBaseAddress->INTENCLR = (1 << 6);
-  spiBaseAddress->INTENCLR = (1 << 1);
-  spiBaseAddress->INTENCLR = (1 << 19);
-
-  nrf_gpio_pin_clear(this->pinCsn);
-
-  currentBufferAddr = 0;
-  currentBufferSize = 0;
-
-  PrepareTx((uint32_t) cmd, cmdSize);
-  spiBaseAddress->TASKS_START = 1;
-  while (spiBaseAddress->EVENTS_END == 0)
-    ;
-
-  PrepareTx((uint32_t) data, dataSize);
-  spiBaseAddress->TASKS_START = 1;
-
-  while (spiBaseAddress->EVENTS_END == 0)
-    ;
-  nrf_gpio_pin_set(this->pinCsn);
-
-  xSemaphoreGive(mutex);
-
-  return true;
+  if (initialized) {
+    __HAL_RCC_SPI1_CLK_ENABLE();
+    ConfigureSpi();
+    HAL_SPI_Init(hspi);
+    __HAL_SPI_ENABLE(hspi);
+  }
 }

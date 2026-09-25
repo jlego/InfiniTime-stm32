@@ -1,7 +1,7 @@
 #include "displayapp/DisplayAppRecovery.h"
 #include <FreeRTOS.h>
 #include <task.h>
-#include <libraries/log/nrf_log.h>
+
 #include "components/fs/FS.h"
 #include "components/rle/RleDecoder.h"
 #include "touchhandler/TouchHandler.h"
@@ -33,13 +33,11 @@ DisplayApp::DisplayApp(Drivers::St7789& lcd,
 void DisplayApp::Start() {
   msgQueue = xQueueCreate(queueSize, itemSize);
   if (pdPASS != xTaskCreate(DisplayApp::Process, "displayapp", 512, this, 0, &taskHandle))
-    APP_ERROR_HANDLER(NRF_ERROR_NO_MEM);
+  }
 }
 
 void DisplayApp::Process(void* instance) {
   auto* app = static_cast<DisplayApp*>(instance);
-  NRF_LOG_INFO("displayapp task started!");
-
   app->InitHw();
   while (true) {
     app->Refresh();

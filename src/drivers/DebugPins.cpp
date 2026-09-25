@@ -1,37 +1,39 @@
-#include "drivers/DebugPins.h"
-#include <hal/nrf_gpio.h>
+#include "stm32wbxx_hal.h"
 
 #ifdef USE_DEBUG_PINS
+
+enum debugpins_pins {
+  DebugPin0 = 0,
+  DebugPin1 = 1,
+  DebugPin2 = 2,
+  DebugPin3 = 3,
+  DebugPin4 = 4
+};
+
 void debugpins_init() {
-  nrf_gpio_cfg_output(DebugPin0);
-  nrf_gpio_pin_clear(DebugPin0);
-
-  nrf_gpio_cfg_output(DebugPin1);
-  nrf_gpio_pin_clear(DebugPin1);
-
-  nrf_gpio_cfg_output(DebugPin2);
-  nrf_gpio_pin_clear(DebugPin2);
-
-  nrf_gpio_cfg_output(DebugPin3);
-  nrf_gpio_pin_clear(DebugPin3);
-
-  nrf_gpio_cfg_output(DebugPin4);
-  nrf_gpio_pin_clear(DebugPin4);
 }
 
 void debugpins_set(debugpins_pins pin) {
-  nrf_gpio_pin_set(static_cast<uint32_t>(pin));
+  (void)pin;
 }
 
 void debugpins_clear(debugpins_pins pin) {
-  nrf_gpio_pin_clear(static_cast<uint32_t>(pin));
+  (void)pin;
 }
 
 void debugpins_pulse(debugpins_pins pin) {
-  nrf_gpio_pin_set(static_cast<uint32_t>(pin));
-  nrf_gpio_pin_clear(static_cast<uint32_t>(pin));
+  (void)pin;
 }
 #else
+
+enum debugpins_pins {
+  DebugPin0 = 0,
+  DebugPin1 = 1,
+  DebugPin2 = 2,
+  DebugPin3 = 3,
+  DebugPin4 = 4
+};
+
 void debugpins_init() {
 }
 

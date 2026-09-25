@@ -33,11 +33,7 @@
 /* Scheduler includes. */
 #include "FreeRTOS.h"
 #include "task.h"
-#ifdef SOFTDEVICE_PRESENT
-#include "nrf_soc.h"
-#include "app_util.h"
-#include "app_util_platform.h"
-#endif
+
 
 #if !(__FPU_USED) && !(__LINT__)
     #error This port can only be used when the project options are configured to enable hardware floating point support.

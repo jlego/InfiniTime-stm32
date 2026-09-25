@@ -1,8 +1,7 @@
 #include "drivers/Bma421.h"
-#include <libraries/delay/nrf_delay.h>
-#include <libraries/log/nrf_log.h>
 #include "drivers/TwiMaster.h"
 #include <drivers/Bma421_C/bma423.h>
+#include "stm32wbxx_hal.h"
 
 using namespace Pinetime::Drivers;
 
@@ -20,17 +19,14 @@ namespace {
   }
 
   void user_delay(uint32_t period_us, void* /*intf_ptr*/) {
-    nrf_delay_us(period_us);
+    HAL_Delay(period_us / 1000);
   }
 
-  // Scale factors to convert accelerometer counts to milli-g
-  // from datasheet: https://files.pine64.org/doc/datasheet/pinetime/BST-BMA421-FL000.pdf
-  // The array index to use is stored in accel_conf.range
   constexpr int16_t accelScaleFactors[] = {
-    [BMA4_ACCEL_RANGE_2G] = 1024, // LSB/g +/- 2g range
-    [BMA4_ACCEL_RANGE_4G] = 512,  // LSB/g +/- 4g range
-    [BMA4_ACCEL_RANGE_8G] = 256,  // LSB/g +/- 8g range
-    [BMA4_ACCEL_RANGE_16G] = 128  // LSB/g +/- 16g range
+    [BMA4_ACCEL_RANGE_2G] = 1024,
+    [BMA4_ACCEL_RANGE_4G] = 512,
+    [BMA4_ACCEL_RANGE_8G] = 256,
+    [BMA4_ACCEL_RANGE_16G] = 128
   };
 }
 
@@ -46,7 +42,7 @@ Bma421::Bma421(TwiMaster& twiMaster, uint8_t twiAddress) : twiMaster {twiMaster}
 
 void Bma421::Init() {
   if (not isResetOk)
-    return; // Call SoftReset (and reset TWI device) first!
+    return;
 
   auto ret = bma423_init(&bma);
   if (ret != BMA4_OK)
@@ -115,10 +111,6 @@ Bma421::Values Bma421::Process() {
   struct bma4_accel data;
   bma4_read_accel_xyz(&rawData, &bma);
 
-  // Scale the measured ADC counts to units of 'binary milli-g'
-  // where 1g = 1024 'binary milli-g' units.
-  // See https://github.com/InfiniTimeOrg/InfiniTime/pull/1950 for
-  // discussion of why we opted for scaling to 1024 rather than 1000.
   data.x = 1024 * rawData.x / accelScaleFactors[accel_conf.range];
   data.y = 1024 * rawData.y / accelScaleFactors[accel_conf.range];
   data.z = 1024 * rawData.z / accelScaleFactors[accel_conf.range];
@@ -126,7 +118,6 @@ Bma421::Values Bma421::Process() {
   uint32_t steps = 0;
   bma423_step_counter_output(&steps, &bma);
 
-  // X and Y axis are swapped because of the way the sensor is mounted in the PineTime
   return {steps, data.y, data.x, data.z};
 }
 
@@ -142,7 +133,7 @@ void Bma421::SoftReset() {
   auto ret = bma4_soft_reset(&bma);
   if (ret == BMA4_OK) {
     isResetOk = true;
-    nrf_delay_ms(1);
+    HAL_Delay(1);
   }
 }
 

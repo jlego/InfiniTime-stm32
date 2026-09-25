@@ -62,17 +62,9 @@ void vPortStartFirstTask( void )
                     " cpsie f               \n"
                     " dsb                   \n"
                     " isb                   \n"
-#ifdef SOFTDEVICE_PRESENT
-                    /* Block kernel interrupts only (PendSV) before calling SVC */
-                    " mov r0, %0            \n"
-                    " msr basepri, r0       \n"
-#endif
                     " svc 0                 \n" /* System call to start first task. */
                     "                       \n"
                     " .align 2              \n"
-#ifdef SOFTDEVICE_PRESENT
-                    ::"i"(configKERNEL_INTERRUPT_PRIORITY  << (8 - configPRIO_BITS))
-#endif
                 );
 }
 

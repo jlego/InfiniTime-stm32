@@ -1,5 +1,5 @@
 #include "displayapp/DisplayApp.h"
-#include <libraries/log/nrf_log.h>
+
 #include "displayapp/screens/HeartRate.h"
 #include "displayapp/screens/Motion.h"
 #include "displayapp/screens/Timer.h"
@@ -138,13 +138,12 @@ void DisplayApp::Start(System::BootErrors error) {
   bootError = error;
 
   if (pdPASS != xTaskCreate(DisplayApp::Process, "displayapp", 800, this, 0, &taskHandle)) {
-    APP_ERROR_HANDLER(NRF_ERROR_NO_MEM);
+
   }
 }
 
 void DisplayApp::Process(void* instance) {
   auto* app = static_cast<DisplayApp*>(instance);
-  NRF_LOG_INFO("displayapp task started!");
   app->Init();
 
   if (app->bootError == System::BootErrors::TouchController) {

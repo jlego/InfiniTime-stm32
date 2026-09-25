@@ -1,5 +1,4 @@
 #include "components/heartrate/Ppg.h"
-#include <nrf_log.h>
 #include <vector>
 
 using namespace Pinetime::Controllers;

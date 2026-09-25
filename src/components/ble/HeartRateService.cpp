@@ -1,7 +1,6 @@
 #include "components/ble/HeartRateService.h"
 #include "components/heartrate/HeartRateController.h"
 #include "components/ble/NimbleController.h"
-#include <nrf_log.h>
 
 using namespace Pinetime::Controllers;
 
@@ -47,7 +46,7 @@ void HeartRateService::Init() {
 
 int HeartRateService::OnHeartRateRequested(uint16_t attributeHandle, ble_gatt_access_ctxt* context) {
   if (attributeHandle == heartRateMeasurementHandle) {
-    NRF_LOG_INFO("HEARTRATE : handle = %d", heartRateMeasurementHandle);
+    ;
     uint8_t buffer[2] = {0, heartRateController.HeartRate()}; // [0] = flags, [1] = hr value
 
     int res = os_mbuf_append(context->om, buffer, 2);

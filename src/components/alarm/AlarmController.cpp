@@ -19,7 +19,6 @@
 #include "systemtask/SystemTask.h"
 #include "task.h"
 #include <chrono>
-#include <libraries/log/nrf_log.h>
 
 using namespace Pinetime::Controllers;
 using namespace std::chrono_literals;
@@ -40,7 +39,7 @@ void AlarmController::Init(System::SystemTask* systemTask) {
   alarmTimer = xTimerCreate("Alarm", 1, pdFALSE, this, SetOffAlarm);
   LoadSettingsFromFile();
   if (alarm.isEnabled) {
-    NRF_LOG_INFO("[AlarmController] Loaded alarm was enabled, scheduling");
+    ;
     ScheduleAlarm();
   }
 }
@@ -146,21 +145,19 @@ void AlarmController::LoadSettingsFromFile() {
   AlarmSettings alarmBuffer;
 
   if (fs.FileOpen(&alarmFile, "/.system/alarm.dat", LFS_O_RDONLY) != LFS_ERR_OK) {
-    NRF_LOG_WARNING("[AlarmController] Failed to open alarm data file");
+    ;
     return;
   }
 
   fs.FileRead(&alarmFile, reinterpret_cast<uint8_t*>(&alarmBuffer), sizeof(alarmBuffer));
   fs.FileClose(&alarmFile);
   if (alarmBuffer.version != alarmFormatVersion) {
-    NRF_LOG_WARNING("[AlarmController] Loaded alarm settings has version %u instead of %u, discarding",
-                    alarmBuffer.version,
-                    alarmFormatVersion);
+    ;
     return;
   }
 
   alarm = alarmBuffer;
-  NRF_LOG_INFO("[AlarmController] Loaded alarm settings from file");
+  ;
 }
 
 void AlarmController::SaveSettingsToFile() const {
@@ -171,11 +168,11 @@ void AlarmController::SaveSettingsToFile() const {
   fs.DirClose(&systemDir);
   lfs_file_t alarmFile;
   if (fs.FileOpen(&alarmFile, "/.system/alarm.dat", LFS_O_WRONLY | LFS_O_CREAT) != LFS_ERR_OK) {
-    NRF_LOG_WARNING("[AlarmController] Failed to open alarm data file for saving");
+    ;
     return;
   }
 
   fs.FileWrite(&alarmFile, reinterpret_cast<const uint8_t*>(&alarm), sizeof(alarm));
   fs.FileClose(&alarmFile);
-  NRF_LOG_INFO("[AlarmController] Saved alarm settings with format version %u to file", alarm.version);
+  ;
 }

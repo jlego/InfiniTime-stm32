@@ -1,41 +1,28 @@
 #include "drivers/InternalFlash.h"
-#include <mdk/nrf.h>
+#include "stm32wbxx_hal.h"
+
 using namespace Pinetime::Drivers;
 
 void InternalFlash::ErasePage(uint32_t address) {
-  // Enable erase.
-  NRF_NVMC->CONFIG = NVMC_CONFIG_WEN_Een;
-  __ISB();
-  __DSB();
+  HAL_FLASH_Unlock();
 
-  // Erase the page
-  NRF_NVMC->ERASEPAGE = address;
-  Wait();
+  FLASH_EraseInitTypeDef EraseInitStruct;
+  uint32_t PageError = 0;
 
-  // Disable erase
-  NRF_NVMC->CONFIG = NVMC_CONFIG_WEN_Ren;
-  __ISB();
-  __DSB();
+  EraseInitStruct.TypeErase = FLASH_TYPEERASE_PAGES;
+  EraseInitStruct.Page = (address - FLASH_BASE) / FLASH_PAGE_SIZE;
+  EraseInitStruct.NbPages = 1;
+
+  HAL_FLASHEx_Erase(&EraseInitStruct, &PageError);
+
+  HAL_FLASH_Lock();
 }
 
 void InternalFlash::WriteWord(uint32_t address, uint32_t value) {
-  // Enable write.
-  NRF_NVMC->CONFIG = NVMC_CONFIG_WEN_Wen;
-  __ISB();
-  __DSB();
-
-  // Write word
-  *(uint32_t*) address = value;
-  Wait();
-
-  // Disable write
-  NRF_NVMC->CONFIG = NVMC_CONFIG_WEN_Ren;
-  __ISB();
-  __DSB();
+  HAL_FLASH_Unlock();
+  HAL_FLASH_Program(FLASH_TYPEPROGRAM_DOUBLEWORD, address, value);
+  HAL_FLASH_Lock();
 }
 
 void InternalFlash::Wait() {
-  while (NRF_NVMC->READY == NVMC_READY_READY_Busy) {
-    ;
-  }
 }

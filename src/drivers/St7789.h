@@ -29,6 +29,9 @@ namespace Pinetime {
       void Sleep();
       void Wakeup();
 
+      static constexpr uint16_t Width = 240;
+      static constexpr uint16_t Height = 280;
+
     private:
       Spi& spi;
       uint8_t pinDataCommand;
@@ -63,6 +66,8 @@ namespace Pinetime {
       void SetVdv();
       void WriteCommand(uint8_t cmd);
       void WriteCommand(const uint8_t* data, size_t size);
+      void WriteData(uint8_t data);
+      void WriteData(const uint8_t* data, size_t size);
       void WriteSpi(const uint8_t* data, size_t size, const std::function<void()>& preTransactionHook);
 
       enum class Commands : uint8_t {
@@ -79,26 +84,20 @@ namespace Pinetime {
         MemoryDataAccessControl = 0x36,
         VerticalScrollDefinition = 0x33,
         VerticalScrollStartAddress = 0x37,
-        IdleModeOff = 0x38,
         IdleModeOn = 0x39,
-        PixelFormat = 0x3a,
-        FrameRateIdle = 0xb3,
-        FrameRateNormal = 0xc6,
-        VdvSet = 0xc4,
+        IdleModeOff = 0x38,
+        ColumnFormat = 0x3a,
         Command2Enable = 0xdf,
-        PowerControl1 = 0xd0,
-        PowerControl2 = 0xe8,
+        FrameRateNormal = 0xb1,
+        FrameRateIdle = 0xb4,
+        PorchControl = 0xb5,
         GateControl = 0xb7,
-        Porch = 0xb2,
+        VdvSetting = 0xc4,
+        PowerControl1 = 0xc0,
+        PowerControl2 = 0xc1,
+        PowerControl3 = 0xc2,
+        PowerControl4 = 0xc3,
       };
-      void WriteData(uint8_t data);
-      void WriteData(const uint8_t* data, size_t size);
-
-      static constexpr uint16_t Width = 240;
-      static constexpr uint16_t Height = 320;
-
-      uint8_t addrWindowArgs[4];
-      uint8_t verticalScrollArgs[2];
     };
   }
 }

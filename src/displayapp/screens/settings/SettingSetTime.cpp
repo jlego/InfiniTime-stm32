@@ -1,6 +1,6 @@
 #include "displayapp/screens/settings/SettingSetTime.h"
 #include <lvgl/lvgl.h>
-#include <nrf_log.h>
+
 #include "displayapp/DisplayApp.h"
 #include "displayapp/screens/Symbols.h"
 #include "components/settings/Settings.h"
@@ -93,7 +93,6 @@ void SettingSetTime::UpdateScreen() {
 void SettingSetTime::SetTime() {
   const int hoursValue = hourCounter.GetValue();
   const int minutesValue = minuteCounter.GetValue();
-  NRF_LOG_INFO("Setting time (manually) to %02d:%02d:00", hoursValue, minutesValue);
   dateTimeController.SetTime(dateTimeController.Year(),
                              static_cast<uint8_t>(dateTimeController.Month()),
                              dateTimeController.Day(),

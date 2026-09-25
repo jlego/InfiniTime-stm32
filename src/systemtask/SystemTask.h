@@ -13,7 +13,6 @@
 #include <components/motion/MotionController.h>
 
 #include "systemtask/SystemMonitor.h"
-#include "components/ble/NimbleController.h"
 #include "components/ble/NotificationManager.h"
 #include "components/stopwatch/StopWatchController.h"
 #include "components/alarm/AlarmController.h"
@@ -83,10 +82,6 @@ namespace Pinetime {
         return wakeLocksHeld > 0;
       }
 
-      Pinetime::Controllers::NimbleController& nimble() {
-        return nimbleController;
-      };
-
       Pinetime::Controllers::NotificationManager& GetNotificationManager() {
         return notificationManager;
       };
@@ -126,7 +121,6 @@ namespace Pinetime {
       Pinetime::Controllers::FS& fs;
       Pinetime::Controllers::TouchHandler& touchHandler;
       Pinetime::Controllers::ButtonHandler& buttonHandler;
-      Pinetime::Controllers::NimbleController nimbleController;
 
       static void Process(void* instance);
       void Work();

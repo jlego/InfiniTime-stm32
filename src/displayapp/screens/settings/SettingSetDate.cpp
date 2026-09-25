@@ -1,7 +1,7 @@
 #include "displayapp/screens/settings/SettingSetDate.h"
 #include "displayapp/screens/settings/SettingSetDateTime.h"
 #include <lvgl/lvgl.h>
-#include <nrf_log.h>
+
 #include "displayapp/DisplayApp.h"
 #include "displayapp/screens/Symbols.h"
 
@@ -95,7 +95,6 @@ void SettingSetDate::HandleButtonPress() {
   const uint16_t yearValue = yearCounter.GetValue();
   const uint8_t monthValue = monthCounter.GetValue();
   const uint8_t dayValue = dayCounter.GetValue();
-  NRF_LOG_INFO("Setting date (manually) to %04d-%02d-%02d", yearValue, monthValue, dayValue);
   dateTimeController
     .SetTime(yearValue, monthValue, dayValue, dateTimeController.Hours(), dateTimeController.Minutes(), dateTimeController.Seconds());
   settingSetDateTime.Advance();

@@ -1,5 +1,4 @@
 #include "components/ble/AlertNotificationService.h"
-#include <hal/nrf_rtc.h>
 #include <cstring>
 #include <algorithm>
 #include "components/ble/NotificationManager.h"

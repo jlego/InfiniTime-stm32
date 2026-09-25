@@ -95,7 +95,7 @@ void HeartRateTask::Start() {
   controller.SetHeartRateTask(this);
 
   if (pdPASS != xTaskCreate(HeartRateTask::Process, "Heartrate", 500, this, 1, &taskHandle)) {
-    APP_ERROR_HANDLER(NRF_ERROR_NO_MEM);
+
   }
 }
 
