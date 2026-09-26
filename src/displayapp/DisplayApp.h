@@ -41,6 +41,7 @@ namespace Pinetime {
     class MotionController;
     class TouchHandler;
     class SimpleWeatherService;
+    class AlertNotificationService;
   }
 
   namespace System {
@@ -81,6 +82,7 @@ namespace Pinetime {
       void Register(Pinetime::Controllers::SimpleWeatherService* weatherService);
       void Register(Pinetime::Controllers::MusicService* musicService);
       void Register(Pinetime::Controllers::NavigationService* NavigationService);
+      void Register(Pinetime::Controllers::AlertNotificationService* alertService);
 
     private:
       Pinetime::Drivers::St7789& lcd;
@@ -101,6 +103,8 @@ namespace Pinetime {
       Pinetime::Controllers::TouchHandler& touchHandler;
       Pinetime::Controllers::FS& filesystem;
       Pinetime::Drivers::SpiNorFlash& spiNorFlash;
+
+      Pinetime::Controllers::AlertNotificationService* alertNotificationService = nullptr;
 
       Pinetime::Controllers::FirmwareValidator validator;
       Pinetime::Components::LittleVgl lvgl;

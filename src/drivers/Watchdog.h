@@ -22,7 +22,7 @@ namespace Pinetime {
       void Start();
       void Kick();
 
-      ResetReason ResetReason();
+      ResetReason GetResetReason() const;
       bool IsRunning();
       bool IsResetRecent();
     };

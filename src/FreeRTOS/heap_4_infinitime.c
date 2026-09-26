@@ -149,7 +149,7 @@ void *pvPortMalloc( size_t xWantedSize )
            do {
              xWantedSize++;
            }
-           while(true);
+           while(1);
          }
          configASSERT( ( xWantedSize & portBYTE_ALIGNMENT_MASK ) == 0 );
        }
@@ -337,7 +337,8 @@ void vPortInitialiseBlocks( void )
 }
 /*-----------------------------------------------------------*/
 
-extern uint8_t *__HeapLimit; // Defined by nrf_common.ld
+extern uint8_t *__HeapLimit;
+extern uint8_t *__StackLimit;
 
 static void prvHeapInit( void )
 {

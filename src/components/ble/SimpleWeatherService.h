@@ -135,7 +135,15 @@ namespace Pinetime {
         int16_t sunrise;
         int16_t sunset;
 
-        bool operator==(const CurrentWeather& other) const;
+        bool operator==(const CurrentWeather& other) const {
+          return temperature == other.temperature &&
+                 minTemperature == other.minTemperature &&
+                 maxTemperature == other.maxTemperature &&
+                 iconId == other.iconId &&
+                 location == other.location &&
+                 sunrise == other.sunrise &&
+                 sunset == other.sunset;
+        }
       };
 
       struct Forecast {
@@ -147,12 +155,20 @@ namespace Pinetime {
           Temperature maxTemperature;
           Icons iconId;
 
-          bool operator==(const Day& other) const;
+          bool operator==(const Day& other) const {
+            return minTemperature == other.minTemperature &&
+                   maxTemperature == other.maxTemperature &&
+                   iconId == other.iconId;
+          }
         };
 
         std::array<std::optional<Day>, MaxNbForecastDays> days;
 
-        bool operator==(const Forecast& other) const;
+        bool operator==(const Forecast& other) const {
+          return timestamp == other.timestamp &&
+                 nbDays == other.nbDays &&
+                 days == other.days;
+        }
       };
 
       std::optional<CurrentWeather> Current() const;

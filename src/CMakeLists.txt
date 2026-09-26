@@ -35,6 +35,8 @@ set(STM32_HAL_SRC
         "${STM32WB55_HAL_PATH}/Drivers/STM32WBxx_HAL_Driver/Src/stm32wbxx_hal_rcc_ex.c"
         "${STM32WB55_HAL_PATH}/Drivers/STM32WBxx_HAL_Driver/Src/stm32wbxx_hal_spi.c"
         "${STM32WB55_HAL_PATH}/Drivers/STM32WBxx_HAL_Driver/Src/stm32wbxx_hal_spi_ex.c"
+        "${STM32WB55_HAL_PATH}/Drivers/STM32WBxx_HAL_Driver/Src/stm32wbxx_hal_i2c.c"
+        "${STM32WB55_HAL_PATH}/Drivers/STM32WBxx_HAL_Driver/Src/stm32wbxx_hal_i2c_ex.c"
         "${STM32WB55_HAL_PATH}/Drivers/STM32WBxx_HAL_Driver/Src/stm32wbxx_ll_rcc.c"
 
         "${STM32WB55_HAL_PATH}/Core/Src/system_stm32wbxx.c"
@@ -229,6 +231,14 @@ list(APPEND IMAGE_FILES
 list(APPEND SOURCE_FILES
         stdlib.c
         FreeRTOS/heap_4_infinitime.c
+
+        libs/FreeRTOS-Kernel/tasks.c
+        libs/FreeRTOS-Kernel/queue.c
+        libs/FreeRTOS-Kernel/list.c
+        libs/FreeRTOS-Kernel/timers.c
+        libs/FreeRTOS-Kernel/event_groups.c
+        libs/FreeRTOS-Kernel/stream_buffer.c
+        libs/FreeRTOS-Kernel/croutine.c
         BootloaderVersion.cpp
         logging/Stm32Logger.cpp
         displayapp/DisplayApp.cpp
@@ -311,6 +321,7 @@ list(APPEND SOURCE_FILES
         components/battery/BatteryController.cpp
         components/ble/BleController.cpp
         components/ble/NotificationManager.cpp
+        components/ble/BleServiceStubs.cpp
         components/datetime/DateTimeController.cpp
         components/brightness/BrightnessController.cpp
         components/motion/MotionController.cpp
@@ -348,6 +359,14 @@ list(APPEND RECOVERY_SOURCE_FILES
         stdlib.c
         FreeRTOS/heap_4_infinitime.c
 
+        libs/FreeRTOS-Kernel/tasks.c
+        libs/FreeRTOS-Kernel/queue.c
+        libs/FreeRTOS-Kernel/list.c
+        libs/FreeRTOS-Kernel/timers.c
+        libs/FreeRTOS-Kernel/event_groups.c
+        libs/FreeRTOS-Kernel/stream_buffer.c
+        libs/FreeRTOS-Kernel/croutine.c
+
         BootloaderVersion.cpp
         logging/Stm32Logger.cpp
         displayapp/DisplayAppRecovery.cpp
@@ -366,6 +385,7 @@ list(APPEND RECOVERY_SOURCE_FILES
         components/battery/BatteryController.cpp
         components/ble/BleController.cpp
         components/ble/NotificationManager.cpp
+        components/ble/BleServiceStubs.cpp
         components/datetime/DateTimeController.cpp
         components/brightness/BrightnessController.cpp
         components/motion/MotionController.cpp
@@ -399,6 +419,14 @@ list(APPEND RECOVERY_SOURCE_FILES
 list(APPEND RECOVERYLOADER_SOURCE_FILES
         stdlib.c
         FreeRTOS/heap_4_infinitime.c
+
+        libs/FreeRTOS-Kernel/tasks.c
+        libs/FreeRTOS-Kernel/queue.c
+        libs/FreeRTOS-Kernel/list.c
+        libs/FreeRTOS-Kernel/timers.c
+        libs/FreeRTOS-Kernel/event_groups.c
+        libs/FreeRTOS-Kernel/stream_buffer.c
+        libs/FreeRTOS-Kernel/croutine.c
 
         FreeRTOS/port.c
         FreeRTOS/port_cmsis_systick.c
@@ -507,6 +535,20 @@ include_directories(
 include_directories(SYSTEM
         libs/
         FreeRTOS/
+        libs/FreeRTOS-Kernel/include
+        libs/FreeRTOS-Kernel/portable/GCC/ARM_CM4F
+
+        libs/mynewt-nimble/porting/npl/freertos/include
+        libs/mynewt-nimble/nimble/include
+        libs/mynewt-nimble/porting/nimble/include
+        libs/mynewt-nimble/nimble/host/include
+        libs/mynewt-nimble/nimble/transport/ram/include
+        libs/mynewt-nimble/nimble/drivers/nrf52/include
+        libs/mynewt-nimble/ext/tinycrypt/include
+        libs/mynewt-nimble/nimble/host/services/gap/include
+        libs/mynewt-nimble/nimble/host/services/gatt/include
+        libs/mynewt-nimble/nimble/host/util/include
+        libs/mynewt-nimble/nimble/host/store/ram/include
 
         "${STM32WB55_HAL_PATH}/Core/Inc"
         "${STM32WB55_HAL_PATH}/Drivers/STM32WBxx_HAL_Driver/Inc"
@@ -556,7 +598,14 @@ target_compile_options(infinitime_fonts PUBLIC
 add_subdirectory(displayapp/apps)
 
 add_library(stm32-hal STATIC ${STM32_HAL_SRC})
-target_include_directories(stm32-hal SYSTEM PUBLIC . ../)
+target_include_directories(stm32-hal SYSTEM PUBLIC
+        "${STM32WB55_HAL_PATH}/Core/Inc"
+        "${STM32WB55_HAL_PATH}/Drivers/STM32WBxx_HAL_Driver/Inc"
+        "${STM32WB55_HAL_PATH}/Drivers/STM32WBxx_HAL_Driver/Inc/Legacy"
+        "${STM32WB55_HAL_PATH}/Drivers/CMSIS/Device/ST/STM32WBxx/Include"
+        "${STM32WB55_HAL_PATH}/Drivers/CMSIS/Include"
+        . ../
+        )
 target_include_directories(stm32-hal SYSTEM PUBLIC ${INCLUDES_FROM_LIBS})
 target_compile_options(stm32-hal PRIVATE
         ${COMMON_FLAGS}
@@ -708,7 +757,7 @@ add_custom_command(TARGET ${EXECUTABLE_RECOVERY_MCUBOOT_NAME}
         COMMAND ${CMAKE_SIZE_UTIL} ${EXECUTABLE_RECOVERY_MCUBOOT_FILE_NAME}.out
         COMMAND ${CMAKE_OBJCOPY} -O binary ${EXECUTABLE_RECOVERY_MCUBOOT_FILE_NAME}.out "${EXECUTABLE_RECOVERY_MCUBOOT_FILE_NAME}.bin"
         COMMAND ${CMAKE_OBJCOPY} -O ihex ${EXECUTABLE_RECOVERY_MCUBOOT_FILE_NAME}.out "${EXECUTABLE_RECOVERY_MCUBOOT_FILE_NAME}.hex"
-        COMMAND ${CMAKE_OBJCOPY} -I ihex -O binary ${IMAGE_RECOVERY_MCUBOOT_FILE_NAME_HEX} "${IMAGE_RECOVERY_MCUBOOT_FILE_NAME}.bin"
+        COMMAND ${CMAKE_OBJCOPY} -I ihex -O binary ${EXECUTABLE_RECOVERY_MCUBOOT_FILE_NAME}.hex "${IMAGE_RECOVERY_MCUBOOT_FILE_NAME}.bin"
         COMMAND python3 ${CMAKE_SOURCE_DIR}/tools/bin2c.py ${IMAGE_RECOVERY_MCUBOOT_FILE_NAME}.bin recoveryImage > recoveryImage.h
         COMMENT "post build steps for ${EXECUTABLE_RECOVERY_MCUBOOT_FILE_NAME}"
         )

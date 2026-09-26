@@ -3,28 +3,31 @@
 
 using namespace Pinetime::Drivers;
 
-static IWDG_HandleTypeDef hiwdg;
 static uint8_t watchdogTimeout = 0;
+static uint32_t watchdogReload = 0;
 
 void Watchdog::Setup(uint8_t timeoutSeconds, SleepBehaviour sleepBehaviour, HaltBehaviour haltBehaviour) {
+  (void)sleepBehaviour;
+  (void)haltBehaviour;
   watchdogTimeout = timeoutSeconds;
-  hiwdg.Instance = IWDG;
-  hiwdg.Init.Prescaler = IWDG_PRESCALER_256;
-  hiwdg.Init.Reload = (timeoutSeconds * 32000) / 256;
-  if (hiwdg.Init.Reload > 0xFFF)
-    hiwdg.Init.Reload = 0xFFF;
-  hiwdg.Init.Window = 0xFFF;
+  watchdogReload = (timeoutSeconds * 32000) / 256;
+  if (watchdogReload > 0xFFF)
+    watchdogReload = 0xFFF;
 }
 
 void Watchdog::Start() {
-  HAL_IWDG_Init(&hiwdg);
+  IWDG->KR = 0x5555;
+  IWDG->PR = 0x06;
+  IWDG->RLR = watchdogReload;
+  while (IWDG->SR != 0) {}
+  IWDG->KR = 0xCCCC;
 }
 
 void Watchdog::Kick() {
-  HAL_IWDG_Refresh(&hiwdg);
+  IWDG->KR = 0xAAAA;
 }
 
-Watchdog::ResetReason Watchdog::ResetReason() {
+Watchdog::ResetReason Watchdog::GetResetReason() const {
   if (__HAL_RCC_GET_FLAG(RCC_FLAG_IWDGRST)) {
     __HAL_RCC_CLEAR_RESET_FLAGS();
     return ResetReason::Watchdog;
@@ -37,7 +40,7 @@ Watchdog::ResetReason Watchdog::ResetReason() {
     __HAL_RCC_CLEAR_RESET_FLAGS();
     return ResetReason::SoftReset;
   }
-  if (__HAL_RCC_GET_FLAG(RCC_FLAG_PORRST)) {
+  if (__HAL_RCC_GET_FLAG(RCC_FLAG_BORRST)) {
     __HAL_RCC_CLEAR_RESET_FLAGS();
     return ResetReason::HardReset;
   }

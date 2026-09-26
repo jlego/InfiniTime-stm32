@@ -7,6 +7,9 @@ using namespace Pinetime::Logging;
 void Stm32Logger::Init() {
 }
 
+void Stm32Logger::Resume() {
+}
+
 void Stm32Logger::Debug(const char* format, ...) {
 #ifdef DEBUG
   va_list args;

@@ -121,12 +121,12 @@ void SystemTask::Work() {
 
   GPIO_InitTypeDef GPIO_InitStruct = {0};
 
-  GPIO_InitStruct.Pin = PinMap::ButtonEnable.pin;
+  GPIO_InitStruct.Pin = PinMap::ButtonEnablePin.pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(PinMap::ButtonEnable.port, &GPIO_InitStruct);
-  HAL_GPIO_WritePin(PinMap::ButtonEnable.port, PinMap::ButtonEnable.pin, GPIO_PIN_SET);
+  HAL_GPIO_Init(PinMap::ButtonEnablePin.port, &GPIO_InitStruct);
+  HAL_GPIO_WritePin(PinMap::ButtonEnablePin.port, PinMap::ButtonEnablePin.pin, GPIO_PIN_SET);
 
   GPIO_InitStruct.Pin = PinMap::ButtonPin.pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING_FALLING;
@@ -291,7 +291,7 @@ void SystemTask::Work() {
         case Messages::OnNewHour:
           using Pinetime::Controllers::AlarmController;
           if (settingsController.GetNotificationStatus() != Controllers::Settings::Notification::Sleep &&
-              settingsController.GetChimeOption() == Controllers::Settings::ChimeOption::Hours && !alarmController.IsAlerting()) {
+              settingsController.GetChimeOption() == Controllers::Settings::ChimesOption::Hours && !alarmController.IsAlerting()) {
             GoToRunning();
             displayApp.PushMessage(Pinetime::Applications::Display::Messages::Chime);
           }
@@ -299,7 +299,7 @@ void SystemTask::Work() {
         case Messages::OnNewHalfHour:
           using Pinetime::Controllers::AlarmController;
           if (settingsController.GetNotificationStatus() != Controllers::Settings::Notification::Sleep &&
-              settingsController.GetChimeOption() == Controllers::Settings::ChimeOption::HalfHours && !alarmController.IsAlerting()) {
+              settingsController.GetChimeOption() == Controllers::Settings::ChimesOption::HalfHours && !alarmController.IsAlerting()) {
             GoToRunning();
             displayApp.PushMessage(Pinetime::Applications::Display::Messages::Chime);
           }
@@ -337,7 +337,7 @@ void SystemTask::Work() {
       monitor.Process();
       NoInit_BackUpTime = dateTimeController.CurrentDateTime();
       if (HAL_GPIO_ReadPin(PinMap::ButtonPin.port, PinMap::ButtonPin.pin) == GPIO_PIN_RESET) {
-        watchdog.Reload();
+        watchdog.Kick();
       }
       lastStateUpdate = xTaskGetTickCount();
     }

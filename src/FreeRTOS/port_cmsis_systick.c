@@ -3,14 +3,6 @@
 #include "stm32wbxx_hal.h"
 
 volatile uint32_t ulTimerCountsForOneTick = 0;
-volatile uint32_t xPendingTicks = 0;
-volatile BaseType_t xYieldPending = pdFALSE;
-
-void SysTick_Handler(void) {
-  if (xTaskGetSchedulerState() != taskSCHEDULER_NOT_STARTED) {
-    xPortSysTickHandler();
-  }
-}
 
 void vPortSetupTimerInterrupt(void) {
   ulTimerCountsForOneTick = (SystemCoreClock / configTICK_RATE_HZ);
@@ -19,9 +11,9 @@ void vPortSetupTimerInterrupt(void) {
   HAL_NVIC_SetPriority(SysTick_IRQn, configKERNEL_INTERRUPT_PRIORITY, 0);
 }
 
-void xPortSysTickHandler(void) {
-  vPortIncrementTick();
-  portYIELD();
+void SysTick_Handler(void) {
+  if (xTaskGetSchedulerState() != taskSCHEDULER_NOT_STARTED) {
+    xTaskIncrementTick();
+    portYIELD_WITHIN_API();
+  }
 }
-
-BaseType_t xPortSysTickHandler(void);

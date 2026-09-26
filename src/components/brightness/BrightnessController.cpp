@@ -3,6 +3,7 @@
 #include "drivers/PinMap.h"
 
 using namespace Pinetime::Controllers;
+using namespace Pinetime::Applications::Screens;
 
 void BrightnessController::Init() {
   GPIO_InitTypeDef GPIO_InitStruct = {0};
@@ -123,4 +124,8 @@ const char* BrightnessController::ToString() {
     default:
       return "???";
   }
+}
+
+BrightnessController::Levels BrightnessController::Level() const {
+  return level;
 }

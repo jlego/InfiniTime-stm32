@@ -8,6 +8,7 @@
 #include "components/ble/BleController.h"
 #include "components/datetime/DateTimeController.h"
 #include "components/ble/NotificationManager.h"
+#include "components/ble/AlertNotificationService.h"
 #include "components/motion/MotionController.h"
 #include "components/motor/MotorController.h"
 #include "displayapp/screens/ApplicationList.h"
@@ -563,20 +564,24 @@ void DisplayApp::LoadScreen(Apps app, DisplayApp::FullRefreshDirections directio
       break;
 
     case Apps::Notifications:
-      currentScreen = std::make_unique<Screens::Notifications>(this,
-                                                               notificationManager,
-                                                               systemTask->nimble().alertService(),
-                                                               motorController,
-                                                               *systemTask,
-                                                               Screens::Notifications::Modes::Normal);
+      if (alertNotificationService) {
+        currentScreen = std::make_unique<Screens::Notifications>(this,
+                                                                 notificationManager,
+                                                                 *alertNotificationService,
+                                                                 motorController,
+                                                                 *systemTask,
+                                                                 Screens::Notifications::Modes::Normal);
+      }
       break;
     case Apps::NotificationsPreview:
-      currentScreen = std::make_unique<Screens::Notifications>(this,
-                                                               notificationManager,
-                                                               systemTask->nimble().alertService(),
-                                                               motorController,
-                                                               *systemTask,
-                                                               Screens::Notifications::Modes::Preview);
+      if (alertNotificationService) {
+        currentScreen = std::make_unique<Screens::Notifications>(this,
+                                                                 notificationManager,
+                                                                 *alertNotificationService,
+                                                                 motorController,
+                                                                 *systemTask,
+                                                                 Screens::Notifications::Modes::Preview);
+      }
       break;
     case Apps::QuickSettings:
       currentScreen = std::make_unique<Screens::QuickSettings>(this,
@@ -729,6 +734,10 @@ void DisplayApp::Register(Pinetime::Controllers::MusicService* musicService) {
 
 void DisplayApp::Register(Pinetime::Controllers::NavigationService* NavigationService) {
   this->controllers.navigationService = NavigationService;
+}
+
+void DisplayApp::Register(Pinetime::Controllers::AlertNotificationService* alertService) {
+  this->alertNotificationService = alertService;
 }
 
 void DisplayApp::ApplyBrightness() {

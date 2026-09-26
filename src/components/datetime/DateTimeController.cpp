@@ -1,5 +1,6 @@
 #include "components/datetime/DateTimeController.h"
 #include <systemtask/SystemTask.h>
+#include <FreeRTOS.h>
 
 
 using namespace Pinetime::Controllers;
@@ -25,7 +26,7 @@ namespace {
 
 DateTime::DateTime(Controllers::Settings& settingsController) : settingsController {settingsController} {
   mutex = xSemaphoreCreateMutex();
-  ASSERT(mutex != nullptr);
+  configASSERT(mutex != nullptr);
   xSemaphoreGive(mutex);
 
   // __DATE__ is a string of the format "MMM DD YYYY", so an offset of 7 gives the start of the year

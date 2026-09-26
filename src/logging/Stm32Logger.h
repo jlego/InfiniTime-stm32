@@ -6,6 +6,7 @@ namespace Pinetime {
     class Stm32Logger : public Logger {
     public:
       void Init() override;
+      void Resume() override;
       void Debug(const char* format, ...) override;
       void Info(const char* format, ...) override;
       void Warn(const char* format, ...) override;

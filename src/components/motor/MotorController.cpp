@@ -44,6 +44,7 @@ void MotorController::StopRinging() {
 }
 
 void MotorController::StopMotor(TimerHandle_t xTimer) {
+  (void)xTimer;
   HAL_GPIO_WritePin(PinMap::MotorPin.port, PinMap::MotorPin.pin, GPIO_PIN_SET);
 }
 
